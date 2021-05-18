@@ -2,10 +2,10 @@
 
 Orchestrating improvisational dance scores through [MoveNet Lightning](https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/3) & [PoseGAN](https://github.com/AliaksandrSiarohin/pose-gan).
 
-![](https://upload.wikimedia.org/wikipedia/commons/9/9c/John_William_Waterhouse_-_Echo_and_Narcissus_-_Google_Art_Project.jpg)
+![Echo and Narcissus by John William Waterhouse](https://upload.wikimedia.org/wikipedia/commons/9/9c/John_William_Waterhouse_-_Echo_and_Narcissus_-_Google_Art_Project.jpg)
 
-Architecture: https://miro.com/app/board/o9J_lDs3wGc=/ \
-PoseGAN paper: https://arxiv.org/abs/2006.12712
+Architecture: [link](https://miro.com/app/board/o9J_lDs3wGc=/) \
+PoseGAN paper: [link](https://arxiv.org/abs/2006.12712)
 
 ## Development
 
@@ -19,7 +19,7 @@ Running the main electron app will start the python server
 | `pipenv install --dev` | install python dev dependencies |
 | `yarn start` | start the main electron app |
 | `yarn dev`   | run the app in dev mode<br>(note: files in `src/client/public` will not update) |
-| `pipenv run cli` | run the python services individually using the cli <br> (note: running this will print further usage) |
+| `pipenv run cli` | run the python services individually using the cli<br>(note: running this will print further usage) |
 
 Checks for both TS and Python can be run using:
 | command | description |
