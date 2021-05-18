@@ -11,11 +11,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,jsx,py}": [
-      "pipenv run sort",
-      "pipenv run format",
-      "pipenv run lint",
-      "pipenv run typecheck",
+    "*.{ts}": [
       "yarn lint:fix",
       "yarn prettier"
     ]

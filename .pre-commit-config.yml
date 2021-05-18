@@ -1,0 +1,32 @@
+repos:
+  - repo: local
+    hooks:
+      - id: sort-py
+        name: sort-py
+        stages: [commit]
+        language: system
+        entry: pipenv run sort
+        types: [python]
+
+      - id: format-py
+        name: format-py
+        stages: [commit]
+        language: system
+        entry: pipenv run format
+        types: [python]
+
+      - id: lint-py
+        name: lint-py
+        stages: [commit]
+        language: system
+        entry: pipenv run lint
+        types: [python]
+        exclude: setup.py
+
+      - id: typecheck-py
+        name: typecheck-py
+        stages: [commit]
+        language: system
+        entry: pipenv run typecheck
+        types: [python]
+        pass_filenames: false
