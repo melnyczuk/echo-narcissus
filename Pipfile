@@ -1,0 +1,30 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+fire = "*"
+websockets = "*"
+
+[dev-packages]
+black = "==20.8b1"
+data-science-types = "*"
+flake8 = "*"
+isort = "*"
+mypy = "*"
+
+[requires]
+python_version = "3.9"
+
+[isort]
+line_length = 80
+use_parentheses = true
+
+[scripts]
+cli = "python -m src.services.cli"
+format = "black -l 80 ."
+lint = "flake8 --max-line-length 80 ."
+server = "python -m src.server.websockets"
+sort = "isort --atomic ."
+typecheck = "mypy ."
