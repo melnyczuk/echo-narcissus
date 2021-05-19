@@ -1,0 +1,6 @@
+.vscode
+.mypy_cache
+.cache
+
+dist
+node_modules
