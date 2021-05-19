@@ -20,12 +20,12 @@ export type MSG<T> = {
 };
 
 const msg =
-  <T>(type: MSG<T>['type']) =>
-  (data?: T): string => {
+  <T>(type: MsgType) =>
+  (data: T): string => {
     const message: MSG<T> = { type, data };
     return JSON.stringify(message);
   };
 
-export const okMsg = msg<void>(MsgType.OK);
+export const okMsg = msg<unknown>(MsgType.OK);
 export const errorMsg = msg<Error>(MsgType.ERROR);
 export const settingsMsg = msg<Settings>(MsgType.SETTINGS);

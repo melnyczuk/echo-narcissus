@@ -14,7 +14,7 @@ const streamContraints: MediaStreamConstraints = {
     width: { max: 3840, ideal: 3840, min: 1280 },
     height: { max: 2160, ideal: 2160, min: 720 },
     frameRate: { max: 30, ideal: 30, min: 25 },
-  }
+  },
 };
 
 const socket = new WebSocket(`ws://${BASE_URL}`);
@@ -35,8 +35,7 @@ socket.onclose = (event): void => {
   console.log(`Socket closed <= ${event.code}`);
 };
 
-socket.onerror = (): void =>
-  console.error('Socket error <=');
+socket.onerror = (): void => console.error('Socket error <=');
 
 socket.onmessage = async (event) => {
   const { data, type } = JSON.parse(event.data);
