@@ -2,7 +2,7 @@ import asyncio
 import json
 from asyncio.events import AbstractEventLoop
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from websockets import server as WsServer
 from websockets.typing import Data
@@ -19,7 +19,7 @@ default_settings = Settings(
 @dataclass
 class Msg:
     type: MsgType
-    data: dict[str, Any] = field(default_factory=dict)
+    data: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self: "Msg") -> None:
         self.type = MsgType(self.type)
@@ -64,7 +64,7 @@ class Server:
     ) -> None:
         async for data in websocket:
             msg = Msg.load(data)
-            print(f"'{path}' {msg.type.value} \t => {msg.data.}")
+            print(f"'{path}' => {msg.type.value}")
             coro = self.__route(msg)
             task = self.event_loop.create_task(coro)
             if result := await task:
