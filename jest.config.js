@@ -4,9 +4,10 @@
 // eslint-disable-next-line no-undef
 module.exports = {
   clearMocks: true,
-	moduleFileExtensions: ['js', 'json', 'jsx', 'ts', 'tsx', 'node'],
+	moduleFileExtensions: ['js', 'json', 'ts', 'node'],
   preset:'ts-jest',
 	roots: ['<rootDir>/src'],
-  testEnvironment: 'node',
+  runner: 'jest-electron/runner',
+  testEnvironment: 'jest-electron/environment',
 	testPathIgnorePatterns: ['/node_modules/'],
 };
