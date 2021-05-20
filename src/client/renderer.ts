@@ -1,5 +1,5 @@
 import console from 'console';
-import { Settings, settingsMsg } from './websockets';
+import { Settings, settingsMsg } from './messages';
 
 const BASE_URL = '127.0.0.1:4242';
 
