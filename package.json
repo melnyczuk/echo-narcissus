@@ -22,7 +22,6 @@
     "@tensorflow/tfjs-backend-webgl": "^3.6.0",
     "@tensorflow/tfjs-converter": "^3.6.0",
     "@tensorflow/tfjs-core": "^3.6.0",
-    "pica": "^6.1.1",
     "ws": "^7.4.5"
   },
   "devDependencies": {

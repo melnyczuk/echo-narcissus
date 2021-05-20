@@ -13,14 +13,13 @@ class MsgType(Enum):
 
 @dataclass
 class Settings:
-    host: str = "127.0.0.1"
-    port: int = 4242
-    model_dir: str = "data"
+    host: str
+    port: int
+    model_dir: str
 
 
 @dataclass
 class PoseKeyPoint:
-
     x: float
     y: float
     score: float

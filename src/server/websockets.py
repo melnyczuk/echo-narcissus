@@ -1,13 +1,19 @@
 import asyncio
 import json
 from asyncio.events import AbstractEventLoop
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Optional
 
 from websockets import server as WsServer
 from websockets.typing import Data
 
 from .types import MsgType, Settings
+
+default_settings = Settings(
+    host="127.0.0.1",
+    port=4242,
+    model_dir="data",
+)
 
 
 @dataclass
@@ -26,9 +32,10 @@ class Msg:
         return json.dumps({"type": self.type.value, "data": self.data})
 
 
+@dataclass
 class Server:
-    settings: Settings
-    event_loop: AbstractEventLoop
+    settings: Settings = default_settings
+    event_loop: AbstractEventLoop = asyncio.get_event_loop()
 
     def run(self: "Server") -> None:
         start = WsServer.serve(
@@ -42,13 +49,13 @@ class Server:
         return
 
     def set_settings(self: "Server", **new_settings: Any) -> None:
-        self.settings = Settings(**new_settings)
+        existing_settings = asdict(self.settings)
+        combined_settings = {**existing_settings, **new_settings}
+        self.settings = Settings(**combined_settings)
         return
 
-    def __init__(self: "Server", **settings: Any) -> None:
-        self.settings = Settings(**settings)
-        self.event_loop = asyncio.get_event_loop()
-        return
+    def __init__(self: "Server", **settings) -> None:
+        self.set_settings(**settings)
 
     async def __handler(
         self: "Server",
@@ -57,7 +64,7 @@ class Server:
     ) -> None:
         async for data in websocket:
             msg = Msg.load(data)
-            print(f"'{path}' {msg.type.value} \t => {msg.data}")
+            print(f"'{path}' {msg.type.value} \t => {msg.data.}")
             coro = self.__route(msg)
             task = self.event_loop.create_task(coro)
             if result := await task:
