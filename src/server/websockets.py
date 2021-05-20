@@ -2,32 +2,18 @@ import asyncio
 import json
 from asyncio.events import AbstractEventLoop
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 from websockets import server as WsServer
 from websockets.typing import Data
 
-
-class MsgType(Enum):
-    OK = "OK"
-    ERROR = "ERROR"
-    SETTINGS = "SETTINGS"
-    POSE = "POSE"
-    IMAGE = "IMAGE"
-
-
-@dataclass
-class Settings:
-    host: str = "127.0.0.1"
-    port: int = 4242
-    model_dir: str = "data"
+from .types import MsgType, Settings
 
 
 @dataclass
 class Msg:
     type: MsgType
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self: "Msg") -> None:
         self.type = MsgType(self.type)
@@ -81,6 +67,10 @@ class Server:
     async def __route(self: "Server", msg: Msg) -> Optional[Msg]:
         if msg.type == MsgType.OK:
             return None
+
+        if msg.type == MsgType.POSE:
+            # handle pose message
+            return msg
 
         if msg.type == MsgType.SETTINGS:
             self.set_settings(**msg.data)

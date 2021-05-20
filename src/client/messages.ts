@@ -1,4 +1,5 @@
 import { JSON } from 'globalthis/implementation';
+import { Pose } from '@tensorflow-models/pose-detection';
 
 enum MsgType {
   OK = 'OK',
@@ -29,3 +30,4 @@ const msg =
 export const okMsg = msg<unknown>(MsgType.OK);
 export const errorMsg = msg<Error>(MsgType.ERROR);
 export const settingsMsg = msg<Settings>(MsgType.SETTINGS);
+export const poseMsg = msg<Pose>(MsgType.POSE);

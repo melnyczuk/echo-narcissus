@@ -1,7 +1,15 @@
 import console from 'console';
-import { Settings, settingsMsg } from './messages';
+import {
+  HTMLVideoElement,
+  MediaStream,
+  window,
+} from 'globalthis/implementation';
+import moveNet from '../services/moveNet';
+import { poseMsg, Settings, settingsMsg } from './messages';
 
 const BASE_URL = '127.0.0.1:4242';
+
+const socket = new WebSocket(`ws://${BASE_URL}`);
 
 const settings: Settings = {
   host: '127.0.0.1',
@@ -17,17 +25,26 @@ const streamContraints: MediaStreamConstraints = {
   },
 };
 
-const socket = new WebSocket(`ws://${BASE_URL}`);
+const animationLoop = (videoElm: HTMLVideoElement) => () => {
+  window.requestAnimationFrame(async () => {
+    const [pose] = await moveNet.run(videoElm);
+    socket.send(poseMsg(pose));
+    animationLoop(videoElm);
+  });
+};
+
+const handleStream = (stream: MediaStream): void => {
+  const videoElm = document.getElementById('webcam') as HTMLVideoElement;
+  videoElm.srcObject = stream;
+  videoElm.onloadeddata = animationLoop(videoElm);
+};
 
 socket.onopen = (event): void => {
   console.log(`Socket open <= ${event.type}`);
   socket.send(settingsMsg(settings));
   navigator.mediaDevices
     .getUserMedia(streamContraints)
-    .then((stream): void => {
-      const videoElm = document.getElementById('webcam') as HTMLVideoElement;
-      videoElm.srcObject = stream;
-    })
+    .then(handleStream)
     .catch(console.error);
 };
 
