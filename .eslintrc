@@ -32,7 +32,7 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "extensions": [".ts", ".tsx", ".d.ts"],
+        "extensions": [".ts", ".d.ts"],
         "paths": ["src"]
       }
     }
