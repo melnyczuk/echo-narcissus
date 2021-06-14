@@ -1,3 +1,1 @@
-import * as moveNet from './moveNet';
-
-export default moveNet;
+export * as default from './moveNet';
