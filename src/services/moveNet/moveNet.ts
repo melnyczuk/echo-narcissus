@@ -1,6 +1,15 @@
-import { HTMLVideoElement } from 'globalthis/implementation';
-import * as poseDetector from '@tensorflow-models/pose-detection';
+import { HTMLCanvasElement } from 'globalthis/implementation';
+import {
+  createDetector as cD,
+  Keypoint,
+  movenet,
+  Pose,
+  PoseDetector,
+  SupportedModels,
+} from '@tensorflow-models/pose-detection';
 import '@tensorflow/tfjs-backend-webgl';
+
+import { drawFrame, drawLabels, drawPoints } from './drawUtils';
 
 /**
  *
@@ -20,15 +29,51 @@ import '@tensorflow/tfjs-backend-webgl';
  *
  */
 
-export async function run(
-  video: HTMLVideoElement
-): Promise<poseDetector.Pose[]> {
-  const detectorConfig = {
-    modelType: poseDetector.movenet.modelType.SINGLEPOSE_LIGHTNING,
-  };
-  const detector = await poseDetector.createDetector(
-    poseDetector.SupportedModels.MoveNet,
-    detectorConfig
-  );
-  return detector.estimatePoses(video);
+interface MoveNetMethod {
+  (canvas: HTMLCanvasElement, pose: Pose): Pose;
 }
+
+type DrawOpts = Partial<Record<'labels' | 'points' | 'frame', boolean>>;
+
+export const createDetector = (): Promise<PoseDetector> =>
+  cD(SupportedModels.MoveNet, {
+    modelType: movenet.modelType.SINGLEPOSE_LIGHTNING,
+  });
+
+export const draw =
+  (color: string, { labels, points, frame }: DrawOpts = {}): MoveNetMethod =>
+  (canvas, pose) => {
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (color) {
+      context.fillStyle = color;
+      context.strokeStyle = color;
+    }
+
+    frame && drawFrame(context, pose.keypoints);
+    labels && drawLabels(context, pose.keypoints);
+    points && drawPoints(context, pose.keypoints);
+
+    return pose;
+  };
+
+export const normalise: MoveNetMethod = (canvas, pose) => {
+  const { width, height } = canvas;
+  const keypoints: Keypoint[] = pose.keypoints.map(({ x, y, ...rest }) => ({
+    ...rest,
+    x: x / width,
+    y: y / height,
+  }));
+  return { ...pose, keypoints };
+};
+
+export const upscale: MoveNetMethod = (canvas, pose) => {
+  const { width, height } = canvas;
+  const keypoints: Keypoint[] = pose.keypoints.map(({ x, y, ...rest }) => ({
+    ...rest,
+    x: x * width,
+    y: y * height,
+  }));
+  return { ...pose, keypoints };
+};

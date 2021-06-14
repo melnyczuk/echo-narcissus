@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional
 from websockets import server as WsServer
 from websockets.typing import Data
 
-from .types import MsgType, Settings
+from .types import MsgType, Pose, Settings
 
 default_settings = Settings(
     host="127.0.0.1",
@@ -76,8 +76,9 @@ class Server:
             return None
 
         if msg.type == MsgType.POSE:
-            # handle pose message
-            return msg
+            pose = Pose(**msg.data)
+            print(f"{pose=}")
+            return None
 
         if msg.type == MsgType.SETTINGS:
             self.set_settings(**msg.data)

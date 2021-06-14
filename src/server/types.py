@@ -11,14 +11,14 @@ class MsgType(Enum):
     IMAGE = "IMAGE"
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Settings:
     host: str
     port: int
     model_dir: str
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class PoseKeyPoint:
     x: float
     y: float
@@ -26,8 +26,16 @@ class PoseKeyPoint:
     name: str
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Pose:
     "https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/README.md#pose-estimation"  # noqa: E501
     score: float
     keypoints: List[PoseKeyPoint]
+
+    def __init__(self: "Pose", score=None, keypoints=None):
+        object.__setattr__(self, "score", score)
+        object.__setattr__(
+            self,
+            "keypoints",
+            [PoseKeyPoint(**kp) for kp in keypoints],
+        )

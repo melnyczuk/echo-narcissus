@@ -1,7 +1,7 @@
 import { JSON } from 'globalthis/implementation';
 import { Pose } from '@tensorflow-models/pose-detection';
 
-enum MsgType {
+export enum MsgType {
   OK = 'OK',
   ERROR = 'ERROR',
   SETTINGS = 'SETTINGS',
