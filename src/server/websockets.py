@@ -1,39 +1,37 @@
 import asyncio
-import json
 from asyncio.events import AbstractEventLoop
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Optional
+from dataclasses import asdict, dataclass
+from typing import Any, Optional
 
+from repose import Repose
+from repose.adapters import Coco
 from websockets import server as WsServer
-from websockets.typing import Data
 
-from .types import MsgType, Pose, Settings
+from .messages import Msg, MsgType
+from ..services.match_pose import PoseMatcher
+
+
+@dataclass(eq=True, frozen=True)
+class Settings:
+    host: str
+    port: int
+    model_dir: str
+    weights: str
+
 
 default_settings = Settings(
     host="127.0.0.1",
     port=4242,
     model_dir="data",
+    weights="weights",
 )
 
-
-@dataclass
-class Msg:
-    type: MsgType
-    data: Dict[str, Any] = field(default_factory=dict)
-
-    def __post_init__(self: "Msg") -> None:
-        self.type = MsgType(self.type)
-
-    @classmethod
-    def load(cls: Callable[..., "Msg"], data: Data) -> "Msg":
-        return cls(**json.loads(data))
-
-    def dump(self: "Msg") -> str:
-        return json.dumps({"type": self.type.value, "data": self.data})
+pose_matcher = PoseMatcher()
 
 
 @dataclass
 class Server:
+    repose: Repose
     settings: Settings = default_settings
     event_loop: AbstractEventLoop = asyncio.get_event_loop()
 
@@ -56,6 +54,7 @@ class Server:
 
     def __init__(self: "Server", **settings) -> None:
         self.set_settings(**settings)
+        self.repose = Repose.load(self.settings.weights)
 
     async def __handler(
         self: "Server",
@@ -76,9 +75,11 @@ class Server:
             return None
 
         if msg.type == MsgType.POSE:
-            pose = Pose(**msg.data)
-            print(f"{pose=}")
-            return None
+            if pose_matcher.match_pose(Coco(**msg.data)):
+                new_pose = Coco.from_tensor(self.repose.generate())
+                return Msg(type=MsgType.POSE, data=new_pose.to_json())
+            else:
+                return None
 
         if msg.type == MsgType.SETTINGS:
             self.set_settings(**msg.data)
