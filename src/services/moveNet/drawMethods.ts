@@ -4,6 +4,10 @@ interface DrawMethod {
   (context: CanvasRenderingContext2D, keypoints: Keypoint[]): void;
 }
 
+export type DrawOptions = Partial<
+  Record<'labels' | 'points' | 'frame', boolean>
+>;
+
 export const drawLabels: DrawMethod = (context, keypoints) =>
   keypoints.forEach(({ x, y, name }) => {
     context.beginPath();
@@ -15,7 +19,7 @@ export const drawPoints: DrawMethod = (context, keypoints) =>
   keypoints.forEach(({ x, y }) => {
     context.beginPath();
     context.arc(x, y, 5, 0, 2 * Math.PI, false);
-    context.fill();
+    context.stroke();
     context.closePath();
   });
 

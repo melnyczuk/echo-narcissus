@@ -1,60 +1,48 @@
+import os
 import asyncio
-import json
 from asyncio.events import AbstractEventLoop
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Optional
+from dataclasses import asdict, dataclass
+from typing import Any, Optional
 
+from repose import Repose
+from repose.adapters import Coco
 from websockets import server as WsServer
-from websockets.typing import Data
 
-from .types import MsgType, Pose, Settings
-
-default_settings = Settings(
-    host="127.0.0.1",
-    port=4242,
-    model_dir="data",
-)
+from ..services.pose_matcher import PoseMatcher
+from .messages import Msg, MsgType
 
 
-@dataclass
-class Msg:
-    type: MsgType
-    data: Dict[str, Any] = field(default_factory=dict)
-
-    def __post_init__(self: "Msg") -> None:
-        self.type = MsgType(self.type)
-
-    @classmethod
-    def load(cls: Callable[..., "Msg"], data: Data) -> "Msg":
-        return cls(**json.loads(data))
-
-    def dump(self: "Msg") -> str:
-        return json.dumps({"type": self.type.value, "data": self.data})
+@dataclass(eq=True, frozen=True)
+class Settings:
+    model_dir: Optional[str] = None
 
 
 @dataclass
 class Server:
-    settings: Settings = default_settings
+    repose: Repose
+    settings: Settings = Settings()
+    pose_matcher: PoseMatcher = PoseMatcher()
     event_loop: AbstractEventLoop = asyncio.get_event_loop()
 
     def run(self: "Server") -> None:
-        start = WsServer.serve(
-            self.__handler,
-            self.settings.host,
-            self.settings.port,
-        )
+        host = os.getenv("WEBSOCKETS_HOST", "127.0.0.1")
+        port = os.getenv("WEBSOCKETS_PORT", 4242)
+        start = WsServer.serve(self.__handler, host, port)
         self.event_loop.run_until_complete(start)
-        print(f"WS server: {self.settings.host=} {self.settings.port=}")
+        print(f"WS server: {host=} {port=}")
         self.event_loop.run_forever()
         return
 
     def set_settings(self: "Server", **new_settings: Any) -> None:
-        existing_settings = asdict(self.settings)
-        combined_settings = {**existing_settings, **new_settings}
+        existing_settings = self.settings
+        combined_settings = {**asdict(existing_settings), **new_settings}
         self.settings = Settings(**combined_settings)
+        if self.settings.model_dir != existing_settings.model_dir:
+            print(f"WS server: loading new models '{self.settings.model_dir}'")
+            self.repose = Repose.load(self.settings.model_dir)
         return
 
-    def __init__(self: "Server", **settings) -> None:
+    def __init__(self: "Server", **settings: Any) -> None:
         self.set_settings(**settings)
 
     async def __handler(
@@ -64,7 +52,6 @@ class Server:
     ) -> None:
         async for data in websocket:
             msg = Msg.load(data)
-            print(f"'{path}' => {msg.type.value}")
             coro = self.__route(msg)
             task = self.event_loop.create_task(coro)
             if result := await task:
@@ -76,11 +63,14 @@ class Server:
             return None
 
         if msg.type == MsgType.POSE:
-            pose = Pose(**msg.data)
-            print(f"{pose=}")
+            if self.pose_matcher.match_pose(Coco(**msg.data)):
+                print("WS server: generating new pose")
+                new_pose = Coco.from_tensor(self.repose.generate())
+                return Msg(type=MsgType.POSE, data=new_pose.to_json())
             return None
 
         if msg.type == MsgType.SETTINGS:
+            print("WS server: updating settings")
             self.set_settings(**msg.data)
             return Msg(type=MsgType.OK)
 

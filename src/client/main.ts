@@ -1,7 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import process from 'process';
 import childProcess from 'child_process';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const server = childProcess.spawn('pipenv', ['run', 'server']);
 
 function createWindow() {

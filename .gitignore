@@ -1,7 +1,10 @@
 .DS_Store
 .mypy_cache
 .vscode
+.env
 
+data
 dist
 node_modules
+
 yarn-error.log
