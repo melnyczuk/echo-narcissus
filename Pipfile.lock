@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "95a74101aaf8eaced5f8bd39445e9a34b870ad43a84fe0a4309af10c7c997ec4"
+            "sha256": "bdc938611218289f22ba3009af460f13837143de46e0d398a2ff895d81817ad0"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -54,9 +54,8 @@
             "version": "==1.20.3"
         },
         "repose": {
-            "editable": true,
             "git": "https://github.com/melnyczuk/repose.git",
-            "ref": "57996256eac062a8817ca5e034b09c37b82f6633"
+            "ref": "71f5439bc64107822c4e65fe928583d585092576"
         },
         "six": {
             "hashes": [
