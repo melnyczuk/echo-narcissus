@@ -8,7 +8,7 @@ from repose.adapters import Coco
 from websockets import server as WsServer
 
 from .messages import Msg, MsgType
-from ..services.match_pose import PoseMatcher
+from ..services.pose_matcher import PoseMatcher
 
 
 @dataclass(eq=True, frozen=True)
