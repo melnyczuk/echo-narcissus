@@ -1,25 +1,16 @@
-import {
-  console,
-  document,
-  HTMLCanvasElement,
-  HTMLVideoElement,
-  MediaStream,
-  window,
-} from 'globalthis/implementation';
-import moveNet from '../services/moveNet';
+import { console } from 'globalthis/implementation';
+import moveNet, { DrawOptions } from '../services/moveNet';
 import { MsgType, poseMsg, Settings, settingsMsg } from './messages';
 
-const BASE_URL = '127.0.0.1:4242';
+const SOCKET_URL = 'ws://127.0.0.1:4242';
 
-const socket = new WebSocket(`ws://${BASE_URL}`);
-
-const settings: Settings = {
+const serverSettings: Settings = {
   host: '127.0.0.1',
   port: 4242,
   model_dir: 'data',
 };
 
-const streamContraints: MediaStreamConstraints = {
+const streamCfg: MediaStreamConstraints = {
   video: {
     width: { max: 3840, ideal: 1280, min: 1280 },
     height: { max: 2160, ideal: 720, min: 720 },
@@ -27,62 +18,61 @@ const streamContraints: MediaStreamConstraints = {
   },
 };
 
-const canvas = document.getElementById('display') as HTMLCanvasElement;
-const fpsElement = document.getElementById('fps');
+const drawOptions: DrawOptions = {
+  frame: true,
+  labels: true,
+  points: true,
+};
 
-const drawLivePose = moveNet.draw('red', {points:true, frame:true});
-const drawGeneratedPose = moveNet.draw('green');
+const socket = new WebSocket(SOCKET_URL);
 
-const renderFPS =
-  (then: number): FrameRequestCallback =>
-  (now: number) => {
-    const elapsedTime = now - then;
-    const fps = (1 / elapsedTime) * 1000;
-    fpsElement.innerText = `${Math.floor(fps)} fps`;
-    window.requestAnimationFrame(renderFPS(now));
-  };
+socket.onopen = async (event) => {
+  console.log(`Socket open <= ${event.type}`);
 
-const bindVideoToMoveNet = async (videoElm: HTMLVideoElement) => {
-  const moveNetDetector = await moveNet.createDetector();
+  const video = document.getElementById('webcam') as HTMLVideoElement;
+  const detector = await moveNet.createDetector();
+  const drawGeneratedPose = moveNet.draw(video, 'green', drawOptions);
+  const drawLivePose = moveNet.draw(video, 'red', drawOptions);
 
-  const loop = async () => {
-    const [pose] = await moveNetDetector.estimatePoses(videoElm);
-    drawLivePose(canvas, pose);
-    const normalisedPose = moveNet.normalise(canvas, pose);
+  socket.send(settingsMsg(serverSettings));
+
+  video.srcObject = await navigator.mediaDevices.getUserMedia(streamCfg);
+  video.onloadeddata = async function loop() {
+    const [pose] = await detector.estimatePoses(video);
+    drawLivePose(pose);
+    const normalisedPose = moveNet.normalise(video, pose);
     socket.send(poseMsg(normalisedPose));
     window.requestAnimationFrame(loop);
   };
 
-  return loop;
-};
+  socket.onclose = (event) => console.log(`Socket closed <= ${event.code}`);
+  socket.onerror = (error) => console.error(`Socket error <= ${error}`);
+  socket.onmessage = (event) => {
+    console.log(`Socket message <= ${event.type}`);
 
-const handleStream = async (stream: MediaStream): Promise<void> => {
-  const videoElm = document.getElementById('webcam') as HTMLVideoElement;
-  videoElm.srcObject = stream;
-  videoElm.onloadeddata = await bindVideoToMoveNet(videoElm);
-};
+    const { data, type } = JSON.parse(event.data);
 
-socket.onopen = (event): void => {
-  console.log(`Socket open <= ${event.type}`);
-  socket.send(settingsMsg(settings));
-  navigator.mediaDevices
-    .getUserMedia(streamContraints)
-    .then(handleStream)
-    .catch(console.error);
-  window.requestAnimationFrame(renderFPS(Date.now() / 1000));
-};
+    if (type === MsgType.POSE) {
+      const upscaledPose = moveNet.upscale(video, data);
+      window.requestAnimationFrame(() => drawGeneratedPose(upscaledPose));
+      return;
+    }
 
-socket.onclose = (event): void => {
-  console.log(`Socket closed <= ${event.code}`);
-};
+    if (type === MsgType.ERROR) {
+      console.error(data);
+      return;
+    }
 
-socket.onerror = (): void => console.error('Socket error <=');
+    if (type === MsgType.IMAGE) {
+      return;
+    }
 
-socket.onmessage = async (event) => {
-  const { data, type } = JSON.parse(event.data);
-  console.log(`${type} <=`, data);
+    if (type === MsgType.SETTINGS) {
+      return;
+    }
 
-  if (type === MsgType.POSE) {
-    drawGeneratedPose(canvas, data);
-  }
+    if (type === MsgType.OK) {
+      return;
+    }
+  };
 };

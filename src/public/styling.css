@@ -13,7 +13,7 @@ body {
   cursor: none;
 }
 
-#webcam, #display {
+#webcam, .display {
   position: absolute;
   left: 0;
   top: 0;

@@ -1,4 +1,3 @@
-import { HTMLCanvasElement } from 'globalthis/implementation';
 import {
   createDetector as cD,
   Keypoint,
@@ -8,8 +7,7 @@ import {
   SupportedModels,
 } from '@tensorflow-models/pose-detection';
 import '@tensorflow/tfjs-backend-webgl';
-
-import { drawFrame, drawLabels, drawPoints } from './drawUtils';
+import { drawFrame, drawLabels, DrawOptions, drawPoints } from './drawMethods';
 
 /**
  *
@@ -29,37 +27,49 @@ import { drawFrame, drawLabels, drawPoints } from './drawUtils';
  *
  */
 
-interface MoveNetMethod {
-  (canvas: HTMLCanvasElement, pose: Pose): Pose;
+interface MoveNetCreateDetectorMethod {
+  (): Promise<PoseDetector>;
 }
 
-type DrawOpts = Partial<Record<'labels' | 'points' | 'frame', boolean>>;
+interface MoveNetRescaleMethod {
+  (video: HTMLVideoElement, pose: Pose): Pose;
+}
 
-export const createDetector = (): Promise<PoseDetector> =>
+interface DrawMethod {
+  (video: HTMLVideoElement, color: string, options: DrawOptions): (
+    p: Pose
+  ) => void;
+}
+
+export const createDetector: MoveNetCreateDetectorMethod = () =>
   cD(SupportedModels.MoveNet, {
     modelType: movenet.modelType.SINGLEPOSE_LIGHTNING,
   });
 
-export const draw =
-  (color: string, { labels, points, frame }: DrawOpts = {}): MoveNetMethod =>
-  (canvas, pose) => {
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
+export const draw: DrawMethod = (
+  video,
+  color,
+  { labels, points, frame } = {}
+) => {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'display';
+  canvas.width = video.width;
+  canvas.height = video.height;
+  document.body.appendChild(canvas);
 
-    if (color) {
-      context.fillStyle = color;
-      context.strokeStyle = color;
-    }
+  const context = canvas.getContext('2d');
+  context.strokeStyle = color;
 
+  return (pose) => {
+    context.clearRect(0, 0, video.width, video.height);
     frame && drawFrame(context, pose.keypoints);
     labels && drawLabels(context, pose.keypoints);
     points && drawPoints(context, pose.keypoints);
-
-    return pose;
   };
+};
 
-export const normalise: MoveNetMethod = (canvas, pose) => {
-  const { width, height } = canvas;
+export const normalise: MoveNetRescaleMethod = (video, pose) => {
+  const { width, height } = video;
   const keypoints: Keypoint[] = pose.keypoints.map(({ x, y, ...rest }) => ({
     ...rest,
     x: x / width,
@@ -68,8 +78,8 @@ export const normalise: MoveNetMethod = (canvas, pose) => {
   return { ...pose, keypoints };
 };
 
-export const upscale: MoveNetMethod = (canvas, pose) => {
-  const { width, height } = canvas;
+export const upscale: MoveNetRescaleMethod = (video, pose) => {
+  const { width, height } = video;
   const keypoints: Keypoint[] = pose.keypoints.map(({ x, y, ...rest }) => ({
     ...rest,
     x: x * width,
