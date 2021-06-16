@@ -9,11 +9,9 @@ export enum MsgType {
   IMAGE = 'IMAGE',
 }
 
-export type Settings = {
-  host: string;
-  port: number;
+export type Settings = Partial<{
   model_dir: string;
-};
+}>;
 
 export type MSG<T> = {
   type: MsgType;

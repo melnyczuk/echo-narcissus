@@ -1,12 +1,11 @@
-import { console } from 'globalthis/implementation';
+import { console, process } from 'globalthis/implementation';
 import moveNet, { DrawOptions } from '../services/moveNet';
 import { MsgType, poseMsg, Settings, settingsMsg } from './messages';
 
-const SOCKET_URL = 'ws://127.0.0.1:4242';
+const { WEBSOCKETS_HOST: HOST = '127.0.0.1', WEBSOCKETS_PORT: PORT = 4242 } =
+  process.env;
 
 const serverSettings: Settings = {
-  host: '127.0.0.1',
-  port: 4242,
   model_dir: 'data',
 };
 
@@ -24,7 +23,7 @@ const drawOptions: DrawOptions = {
   points: true,
 };
 
-const socket = new WebSocket(SOCKET_URL);
+const socket = new WebSocket(`ws://${HOST}:${PORT}`);
 
 socket.onopen = async (event) => {
   console.log(`Socket open <= ${event.type}`);
